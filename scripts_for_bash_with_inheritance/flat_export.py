@@ -51,6 +51,8 @@ for dict_data in parsed_data:
         with contextlib.suppress(Exception):
             if math.isnan(value):
                 dict_data[key] = None
+            elif key in ['shipper_inn']:
+                dict_data[key] = int(value)
     dict_data['terminal'] = os.environ.get('XL_IMPORT_TERMINAL')
     dict_data['parsed_on'] = parsed_on
     dict_data['original_file_name'] = os.path.basename(input_file_path)
