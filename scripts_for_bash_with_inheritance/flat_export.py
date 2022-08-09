@@ -1,47 +1,60 @@
-import csv
+import contextlib
 import datetime
 import json
+import math
 import os
 import re
 import sys
+import pandas as pd
+import numpy as np
 
 input_file_path = os.path.abspath(sys.argv[1])
 output_folder = sys.argv[2]
 
-headers_eng = [
-    "terminal", "date", "line", "count", "container_size", "teu", "container_type", "unload_seaport",
-    "unload_country", "ship", "voyage", "container_number", "shipper", "consignee", "goods_name_rus",
-    "consignment", "expeditor", "shipper_inn", "goods_tnved", "city"
-]
-needed_headers = [
-    "terminal", "date", "line", "container_size", "container_type", "unload_seaport",
-    "unload_country", "ship", "voyage", "container_number", "shipper", "consignee", "goods_name_rus",
-    "consignment", "expeditor", "shipper_inn", "goods_tnved", "city"
-]
+headers_eng = {
+    "Терминал": "terminal",
+    "Дата отправления": "date",
+    "Линия": "line",
+    "Количество": "count",
+    "Размер контейнера": "container_size",
+    "TEU": "teu",
+    "Тип контейнера": "container_type",
+    "Порт выгрузки": "unload_seaport",
+    "Страна выгрузки": "unload_country",
+    "Судно": "ship",
+    "Рейс": "voyage",
+    "Контейнер из партии": "container_number",
+    "Отправитель": "shipper",
+    "Получатель": "consignee",
+    "Наименование товара": "goods_name_rus",
+    "Номер коносамента": "consignment",
+    "Экспедитор": "expeditor",
+    "ИНН Грузоотправителя": "shipper_inn",
+    "ТНВЭД": "goods_tnved",
+    "Город": "city"
+}
 
-with open(input_file_path, newline='') as csvfile:
-    lines = csv.DictReader(csvfile, fieldnames=headers_eng)
-    lines = list(lines)
-
-parsed_data = []
-for line in lines[1:]:
-    if not "".join(line.values()):
-        continue
-    parsed_record = {k: v for k, v in line.items() if k in needed_headers}
-    for key, value in parsed_record.items():
-        if not value:
-            parsed_record[key] = None
-    parsed_record['terminal'] = os.environ.get('XL_IMPORT_TERMINAL')
-    date_previous = re.match('\d{2,4}.\d{1,2}', os.path.basename(input_file_path))
-    date_previous = f'{date_previous.group()}.01' if date_previous else date_previous
-    if date_previous is None:
-        raise Exception('Date not in file name!')
-    else:
-        parsed_record['parsed_on'] = str(datetime.datetime.strptime(date_previous, "%Y.%m.%d").date())
-    parsed_record['original_file_name'] = os.path.basename(input_file_path)
-    parsed_record['original_file_parsed_on'] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    parsed_data.append(parsed_record)
-
+df = pd.read_csv(input_file_path)
+df = df.replace({np.nan: None})
+df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+df = df.rename(columns=headers_eng)
+df = df.loc[:, ~df.columns.isin(['count', 'teu'])]
+parsed_data = df.to_dict('records')
+date_previous = re.match('\d{2,4}.\d{1,2}', os.path.basename(input_file_path))
+date_previous = f'{date_previous.group()}.01' if date_previous else date_previous
+if date_previous is None:
+    raise Exception('Date not in file name!')
+else:
+    parsed_on = str(datetime.datetime.strptime(date_previous, "%Y.%m.%d").date())
+for dict_data in parsed_data:
+    for key, value in dict_data.items():
+        with contextlib.suppress(Exception):
+            if math.isnan(value):
+                dict_data[key] = None
+    dict_data['terminal'] = os.environ.get('XL_IMPORT_TERMINAL')
+    dict_data['parsed_on'] = parsed_on
+    dict_data['original_file_name'] = os.path.basename(input_file_path)
+    dict_data['original_file_parsed_on'] = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 basename = os.path.basename(input_file_path)
 output_file_path = os.path.join(output_folder, f'{basename}.json')
 with open(f"{output_file_path}", 'w', encoding='utf-8') as f:
