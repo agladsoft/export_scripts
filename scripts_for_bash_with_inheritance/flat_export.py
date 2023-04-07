@@ -14,25 +14,24 @@ date_formats = ("%Y-%m-%d", "%d.%m.%Y")
 
 headers_eng = {
     "Терминал": "terminal",
-    "Дата отправления": "date",
+    "Дата отправления": "shipment_date",
     "Линия": "line",
-    "Количество": "count",
+    "Количество": "container_count",
     "Размер контейнера": "container_size",
     "TEU": "teu",
     "Тип контейнера": "container_type",
-    "Порт выгрузки": "unload_seaport",
-    "Страна выгрузки": "unload_country",
-    "Судно": "ship",
+    "Порт выгрузки": "tracking_seaport",
+    "Страна выгрузки": "tracking_country ",
+    "Судно": "ship_name",
     "Рейс": "voyage",
     "Контейнер из партии": "container_number",
-    "Отправитель": "shipper",
-    "Получатель": "consignee",
-    "Наименование товара": "goods_name_rus",
+    "Отправитель": "shipper_name",
+    "Получатель": "consignee_name",
+    "Наименование товара": "goods_name",
     "Номер коносамента": "consignment",
     "Экспедитор": "expeditor",
     "ИНН Грузоотправителя": "shipper_inn",
-    "ТНВЭД": "goods_tnved",
-    "Город": "city"
+    "ТНВЭД": "tnved"
 }
 
 def convert_format_date(date):
