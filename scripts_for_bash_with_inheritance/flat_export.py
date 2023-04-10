@@ -62,6 +62,8 @@ for dict_data in parsed_data:
                 dict_data[key] = int(value)
             elif key in ['date']:
                 dict_data[key] = convert_format_date(value)
+
+    dict_data['gtd_number'] = 'Нет данных'
     dict_data['terminal'] = os.environ.get('XL_IMPORT_TERMINAL')
     dict_data['parsed_on'] = parsed_on
     dict_data['original_file_name'] = os.path.basename(input_file_path)
