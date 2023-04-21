@@ -68,7 +68,7 @@ class Export(object):
         else:
             return str(datetime.strptime(date_previous, "%Y.%m.%d").date())
 
-    def write_to_json(self, parsed_data: list[dict]) -> None:
+    def write_to_json(self, parsed_data: list) -> None:
         """
         Write data to json.
         """
