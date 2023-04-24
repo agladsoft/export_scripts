@@ -10,7 +10,6 @@ from datetime import datetime
 
 headers_eng: dict = {
     "Терминал": "terminal",
-    "Дата отправления": "shipment_date",
     "Линия": "line",
     "Количество": "container_count",
     "Размер контейнера": "container_size",
@@ -45,7 +44,6 @@ class Export(object):
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            df['shipment_date'] = df['shipment_date'].dt.date.astype(str)
             df['voyage'] = df['voyage'].astype(str)
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
@@ -83,12 +81,15 @@ class Export(object):
         """
         df: DataFrame = pd.read_excel(self.input_file_path, dtype={"ИНН Грузоотправителя": str})
         df = df.dropna(axis=0, how='all')
+        original_columns = list(df.columns)
         df = df.rename(columns=headers_eng)
+        renamed_columns = list(df.columns)
+        df = df.drop(columns=set(original_columns) & set(renamed_columns))
         df = df.loc[:, ~df.columns.isin(['container_count', 'teu'])]
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         parsed_on: str = self.check_date_in_begin_file()
         self.add_new_columns(df, parsed_on)
-        self.change_type_and_values(df)
+        # self.change_type_and_values(df)
         df = df.replace({np.nan: None})
         self.write_to_json(df.to_dict('records'))
 
