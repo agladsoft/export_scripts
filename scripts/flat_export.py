@@ -39,12 +39,12 @@ class Export(object):
         self.output_folder: str = output_folder
 
     @staticmethod
-    def change_type_and_values(df: DataFrame) -> None:
+    def change_type_and_values() -> None:
         """
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            df['voyage'] = df['voyage'].astype(str)
+            pass
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
         """
@@ -79,7 +79,7 @@ class Export(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
-        df: DataFrame = pd.read_excel(self.input_file_path, dtype={"ИНН Грузоотправителя": str})
+        df: DataFrame = pd.read_excel(self.input_file_path, dtype={"ИНН Грузоотправителя": str, "Рейс": str})
         df = df.dropna(axis=0, how='all')
         original_columns = list(df.columns)
         df = df.rename(columns=headers_eng)
