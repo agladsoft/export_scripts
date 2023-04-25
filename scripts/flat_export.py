@@ -16,7 +16,7 @@ headers_eng: dict = {
     "TEU": "teu",
     "Тип контейнера": "container_type",
     "Порт выгрузки": "tracking_seaport",
-    "Страна выгрузки": "tracking_country ",
+    "Страна выгрузки": "tracking_country",
     "Судно": "ship_name",
     "Рейс": "voyage",
     "Контейнер из партии": "container_number",
