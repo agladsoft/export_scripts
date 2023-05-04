@@ -11,6 +11,7 @@ from datetime import datetime
 headers_eng: dict = {
     "Терминал": "terminal",
     "Линия": "line",
+    "Дата отгрузки": "shipment_date",
     "Количество": "container_count",
     "Размер контейнера": "container_size",
     "TEU": "teu",
@@ -39,12 +40,12 @@ class Export(object):
         self.output_folder: str = output_folder
 
     @staticmethod
-    def change_type_and_values() -> None:
+    def change_type_and_values(df: DataFrame) -> None:
         """
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            pass
+            df['shipment_date'] = df['shipment_date'].dt.date.astype(str)
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
         """
@@ -88,7 +89,7 @@ class Export(object):
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         parsed_on: str = self.check_date_in_begin_file()
         self.add_new_columns(df, parsed_on)
-        # self.change_type_and_values(df)
+        self.change_type_and_values(df)
         df = df.replace({np.nan: None})
         self.write_to_json(df.to_dict('records'))
 
