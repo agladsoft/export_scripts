@@ -30,6 +30,13 @@ headers_eng: dict = {
     "ТНВЭД": "tnved"
 }
 
+dict_types: dict = {
+    "ИНН Грузоотправителя": str,
+    "Рейс": str,
+    "TEU": int,
+    "ТНВЭД": str
+}
+
 
 date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y")
 
@@ -80,7 +87,7 @@ class Export(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
-        df: DataFrame = pd.read_excel(self.input_file_path, dtype={"ИНН Грузоотправителя": str, "Рейс": str})
+        df: DataFrame = pd.read_excel(self.input_file_path, dtype=dict_types)
         df = df.dropna(axis=0, how='all')
         original_columns = list(df.columns)
         df = df.rename(columns=headers_eng)
