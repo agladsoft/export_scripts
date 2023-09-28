@@ -5,6 +5,7 @@ import json
 import contextlib
 import numpy as np
 import pandas as pd
+from parsed import ParsedDf
 from pandas import DataFrame
 from datetime import datetime
 
@@ -98,6 +99,7 @@ class Export(object):
         self.add_new_columns(df, parsed_on)
         self.change_type_and_values(df)
         df = df.replace({np.nan: None, "NaT": None})
+        ParsedDf(df).get_port()
         self.write_to_json(df.to_dict('records'))
 
 
