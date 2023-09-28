@@ -98,8 +98,8 @@ class Export(object):
         parsed_on: str = self.check_date_in_begin_file()
         self.add_new_columns(df, parsed_on)
         self.change_type_and_values(df)
-        df = df.replace({np.nan: None, "NaT": None})
         ParsedDf(df).get_port()
+        df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
 
