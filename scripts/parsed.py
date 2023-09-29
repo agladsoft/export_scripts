@@ -62,7 +62,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "service_consignment:8004"
+        self.url = "http://service_consignment:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
