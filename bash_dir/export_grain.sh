@@ -1,6 +1,6 @@
 #!/bin/bash
 
-xls_path="${XL_IDP_PATH_EXPORT}/export_grain"
+xls_path="${XL_IDP_PATH_EXPORT}/export_grain/flat_export_grain"
 
 done_path="${xls_path}"/done
 if [ ! -d "$done_path" ]; then
