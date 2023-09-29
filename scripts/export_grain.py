@@ -87,5 +87,6 @@ class ExportGrain(object):
         self.write_to_json(df.to_dict('records'))
 
 
-export_grain: ExportGrain = ExportGrain(sys.argv[1], sys.argv[2])
-export_grain.main()
+if __name__ == "__main__":
+    export_grain: ExportGrain = ExportGrain(sys.argv[1], sys.argv[2])
+    export_grain.main()
