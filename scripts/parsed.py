@@ -62,7 +62,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "http://service_consignment:8004"
+        self.url = "service_consignment:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -112,7 +112,7 @@ class ParsedDf:
                     self.write_port(index, port)
                     try:
                         data[row.get('container_number')].setdefault('tracking_seaport',
-                                                                     port)
+                                                                     self.df.get('is_auto_tracking')[index])
                         data[row.get('container_number')].setdefault('is_auto_tracking',
                                                                      self.df.get('is_auto_tracking')[index])
                         data[row.get('container_number')].setdefault('is_auto_tracking_ok',
