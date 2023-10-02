@@ -77,7 +77,7 @@ class ParsedDf:
     def body(self, row):
         data = {
             'line': row.get('line'),
-            'consignment': row.get('container_number'),
+            'consignment': row.get('booking'),
             'direction': row.get('direction', 'export')
 
         }
@@ -105,27 +105,27 @@ class ParsedDf:
                 continue
             if any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
-            if row.get('container_number', False) not in data:
-                data[row.get('container_number')] = {}
+            if row.get('booking', False) not in data:
+                data[row.get('booking')] = {}
                 if row.get('enforce_auto_tracking', True):
                     port = self.get_result(row)
                     self.write_port(index, port)
                     try:
-                        data[row.get('container_number')].setdefault('tracking_seaport',
+                        data[row.get('booking')].setdefault('tracking_seaport',
                                                                      self.df.get('is_auto_tracking')[index])
-                        data[row.get('container_number')].setdefault('is_auto_tracking',
+                        data[row.get('booking')].setdefault('is_auto_tracking',
                                                                      self.df.get('is_auto_tracking')[index])
-                        data[row.get('container_number')].setdefault('is_auto_tracking_ok',
+                        data[row.get('booking')].setdefault('is_auto_tracking_ok',
                                                                      self.df.get('is_auto_tracking_ok')[index])
                     except KeyError as ex:
                         logging.info(f'Ошибка при получение ключа из DataFrame {ex}')
             else:
-                tracking_seaport = data.get(row.get('consignment')).get('tracking_seaport') if data.get(
-                    row.get('container_number')) is not None else None
-                is_auto_tracking = data.get(row.get('consignment')).get('is_auto_tracking') if data.get(
-                    row.get('container_number')) is not None else None
-                is_auto_tracking_ok = data.get(row.get('consignment')).get('is_auto_tracking_ok') if data.get(
-                    row.get('container_number')) is not None else None
+                tracking_seaport = data.get(row.get('booking')).get('tracking_seaport') if data.get(
+                    row.get('booking')) is not None else None
+                is_auto_tracking = data.get(row.get('booking')).get('is_auto_tracking') if data.get(
+                    row.get('booking')) is not None else None
+                is_auto_tracking_ok = data.get(row.get('booking')).get('is_auto_tracking_ok') if data.get(
+                    row.get('booking')) is not None else None
                 self.df.at[index, 'tracking_seaport'] = tracking_seaport
                 self.df.at[index, 'is_auto_tracking'] = is_auto_tracking
                 self.df.at[index, 'is_auto_tracking_ok'] = is_auto_tracking_ok
