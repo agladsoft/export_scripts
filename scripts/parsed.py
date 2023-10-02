@@ -62,7 +62,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "http://service_consignment:8004"
+        self.url = "http://10.23.4.203:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -74,17 +74,17 @@ class ParsedDf:
             return 'export'
         return direction
 
-    def body(self, row):
+    def body(self, row,consignment):
         data = {
             'line': row.get('line'),
-            'consignment': row.get('booking'),
+            'consignment': row.get(consignment),
             'direction': row.get('direction', 'export')
 
         }
         return data
 
-    def get_result(self, row):
-        body = self.body(row)
+    def get_result(self, row,consignment):
+        body = self.body(row,consignment)
         body = json.dumps(body)
         try:
             answer = requests.post(self.url, data=body, headers=self.headers)
@@ -105,27 +105,28 @@ class ParsedDf:
                 continue
             if any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
-            if row.get('booking', False) not in data:
-                data[row.get('booking')] = {}
+            consignment = 'container_number' if row.get('line').upper() in ['ARKAS','MSC'] else 'consignment'
+            if row.get(consignment, False) not in data:
+                data[row.get(consignment)] = {}
                 if row.get('enforce_auto_tracking', True):
-                    port = self.get_result(row)
+                    port = self.get_result(row,consignment)
                     self.write_port(index, port)
                     try:
-                        data[row.get('booking')].setdefault('tracking_seaport',
+                        data[row.get(consignment)].setdefault('tracking_seaport',
+                                                                     self.df.get('tracking_seaport')[index])
+                        data[row.get(consignment)].setdefault('is_auto_tracking',
                                                                      self.df.get('is_auto_tracking')[index])
-                        data[row.get('booking')].setdefault('is_auto_tracking',
-                                                                     self.df.get('is_auto_tracking')[index])
-                        data[row.get('booking')].setdefault('is_auto_tracking_ok',
+                        data[row.get(consignment)].setdefault('is_auto_tracking_ok',
                                                                      self.df.get('is_auto_tracking_ok')[index])
                     except KeyError as ex:
                         logging.info(f'Ошибка при получение ключа из DataFrame {ex}')
             else:
-                tracking_seaport = data.get(row.get('booking')).get('tracking_seaport') if data.get(
-                    row.get('booking')) is not None else None
-                is_auto_tracking = data.get(row.get('booking')).get('is_auto_tracking') if data.get(
-                    row.get('booking')) is not None else None
-                is_auto_tracking_ok = data.get(row.get('booking')).get('is_auto_tracking_ok') if data.get(
-                    row.get('booking')) is not None else None
+                tracking_seaport = data.get(row.get(consignment)).get('tracking_seaport') if data.get(
+                    row.get(consignment)) is not None else None
+                is_auto_tracking = data.get(row.get(consignment)).get('is_auto_tracking') if data.get(
+                    row.get(consignment)) is not None else None
+                is_auto_tracking_ok = data.get(row.get()).get('is_auto_tracking_ok') if data.get(
+                    row.get(consignment)) is not None else None
                 self.df.at[index, 'tracking_seaport'] = tracking_seaport
                 self.df.at[index, 'is_auto_tracking'] = is_auto_tracking
                 self.df.at[index, 'is_auto_tracking_ok'] = is_auto_tracking_ok
