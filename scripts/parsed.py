@@ -10,7 +10,8 @@ class Parsed:
             'Content-Type': 'application/json'
         }
 
-    def body(self, row, line):
+    @staticmethod
+    def body(row, line):
         data = {
             'line': line,
             'consignment': row['consignment'],
@@ -37,7 +38,8 @@ class Parsed:
         port = self.get_result(row, line)
         self.write_port(row, port)
 
-    def write_port(self, row, port):
+    @staticmethod
+    def write_port(row, port):
         row['is_auto_tracking'] = True
         if port:
             row['is_auto_tracking_ok'] = True
@@ -46,7 +48,8 @@ class Parsed:
             row['is_auto_tracking_ok'] = False
             row['tracking_seaport'] = None
 
-    def add_new_columns(self, row):
+    @staticmethod
+    def add_new_columns(row):
         if "enforce_auto_tracking" not in row:
             row['is_auto_tracking'] = None
 
@@ -55,6 +58,9 @@ LINES = ['СИНОКОР РУС ООО', 'HEUNG-A LINE CO., LTD', 'MSC', 'SINOKO
          'ARKAS', 'arkas', 'Arkas',
          'MSC', 'msc', 'Msc', 'SINOKOR', 'sinokor', 'Sinokor', 'SINAKOR', 'sinakor', 'HUENG-A LINE',
          'HEUNG-A LINE CO., LTD', 'heung']
+HEUNG_AND_SINOKOR = ['СИНОКОР РУС ООО', 'HEUNG-A LINE CO., LTD', 'SINOKOR', 'SINAKOR', 'SKR', 'sinokor', 'HUENG-A LINE',
+                     'HEUNG-A LINE CO., LTD', 'heung']
+
 IMPORT = ['импорт', 'import']
 EXPORT = ['export', 'экспорт']
 
@@ -67,14 +73,21 @@ class ParsedDf:
             'Content-Type': 'application/json'
         }
 
-    def get_direction(self, direction):
+    @staticmethod
+    def check_lines(row: dict) -> bool:
+        if row.get('line').upper() in HEUNG_AND_SINOKOR:
+            return False
+        return True
+    @staticmethod
+    def get_direction(direction):
         if direction.lower() in IMPORT:
             return 'import'
         elif direction.lower() in EXPORT:
             return 'export'
         return direction
 
-    def body(self, row,consignment):
+    @staticmethod
+    def body(row, consignment):
         data = {
             'line': row.get('line'),
             'consignment': row.get(consignment),
@@ -83,8 +96,8 @@ class ParsedDf:
         }
         return data
 
-    def get_result(self, row,consignment):
-        body = self.body(row,consignment)
+    def get_result(self, row, consignment):
+        body = self.body(row, consignment)
         body = json.dumps(body)
         try:
             answer = requests.post(self.url, data=body, headers=self.headers)
@@ -96,6 +109,15 @@ class ParsedDf:
             return None
         return result
 
+    @staticmethod
+    def get_consignment(row):
+        if row.get('line').upper() in ['ARKAS', 'MSC']:
+            return 'container_number'
+        else:
+            if 'booking' in row:
+                return 'booking'
+            return 'consignment'
+
     def get_port(self):
         self.add_new_columns()
         logging.info("Запросы к микросервису")
@@ -103,21 +125,21 @@ class ParsedDf:
         for index, row in self.df.iterrows():
             if row.get('line').upper() not in LINES:
                 continue
-            if any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
+            if self.check_lines(row) and any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
-            consignment = 'container_number' if row.get('line').upper() in ['ARKAS','MSC'] else 'consignment'
+            consignment = self.get_consignment(row)
             if row.get(consignment, False) not in data:
                 data[row.get(consignment)] = {}
                 if row.get('enforce_auto_tracking', True):
-                    port = self.get_result(row,consignment)
+                    port = self.get_result(row, consignment)
                     self.write_port(index, port)
                     try:
                         data[row.get(consignment)].setdefault('tracking_seaport',
-                                                                     self.df.get('tracking_seaport')[index])
+                                                              self.df.get('tracking_seaport')[index])
                         data[row.get(consignment)].setdefault('is_auto_tracking',
-                                                                     self.df.get('is_auto_tracking')[index])
+                                                              self.df.get('is_auto_tracking')[index])
                         data[row.get(consignment)].setdefault('is_auto_tracking_ok',
-                                                                     self.df.get('is_auto_tracking_ok')[index])
+                                                              self.df.get('is_auto_tracking_ok')[index])
                     except KeyError as ex:
                         logging.info(f'Ошибка при получение ключа из DataFrame {ex}')
             else:
@@ -125,7 +147,7 @@ class ParsedDf:
                     row.get(consignment)) is not None else None
                 is_auto_tracking = data.get(row.get(consignment)).get('is_auto_tracking') if data.get(
                     row.get(consignment)) is not None else None
-                is_auto_tracking_ok = data.get(row.get()).get('is_auto_tracking_ok') if data.get(
+                is_auto_tracking_ok = data.get(row.get(consignment)).get('is_auto_tracking_ok') if data.get(
                     row.get(consignment)) is not None else None
                 self.df.at[index, 'tracking_seaport'] = tracking_seaport
                 self.df.at[index, 'is_auto_tracking'] = is_auto_tracking
@@ -140,7 +162,8 @@ class ParsedDf:
         else:
             self.df.at[index, 'is_auto_tracking_ok'] = False
 
-    def check_line(self, line):
+    @staticmethod
+    def check_line(line):
         if line not in LINES:
             return True
         return False
