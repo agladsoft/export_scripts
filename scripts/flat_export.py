@@ -47,12 +47,21 @@ class Export(object):
         self.output_folder: str = output_folder
 
     @staticmethod
-    def change_type_and_values(df: DataFrame) -> None:
+    def convert_format_date(date: str) -> str:
+        """
+        Convert to a date type.
+        """
+        for date_format in date_formats:
+            with contextlib.suppress(ValueError):
+                return str(datetime.strptime(date, date_format).date())
+        return date
+
+    def change_type_and_values(self, df: DataFrame) -> None:
         """
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            df['shipment_date'] = df['shipment_date'].dt.date.astype(str)
+            df['shipment_date'] = df['shipment_date'].apply(lambda x: self.convert_format_date(x))
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
         """
