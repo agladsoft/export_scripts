@@ -38,7 +38,7 @@ dict_types: dict = {
 }
 
 
-date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y")
+date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S")
 
 
 class Export(object):
@@ -61,7 +61,7 @@ class Export(object):
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            df['shipment_date'] = df['shipment_date'].apply(lambda x: self.convert_format_date(x))
+            df['shipment_date'] = df['shipment_date'].apply(lambda x: self.convert_format_date(str(x)))
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
         """
