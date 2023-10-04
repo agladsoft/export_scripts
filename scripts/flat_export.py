@@ -5,6 +5,7 @@ import json
 import contextlib
 import numpy as np
 import pandas as pd
+from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
 
@@ -47,14 +48,14 @@ class Export(object):
         self.output_folder: str = output_folder
 
     @staticmethod
-    def convert_format_date(date: str) -> str:
+    def convert_format_date(date: str) -> Optional[str]:
         """
         Convert to a date type.
         """
         for date_format in date_formats:
             with contextlib.suppress(ValueError):
                 return str(datetime.strptime(date, date_format).date())
-        return date
+        return None
 
     def change_type_and_values(self, df: DataFrame) -> None:
         """
