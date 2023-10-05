@@ -101,7 +101,7 @@ class ParsedDf:
         body = self.body(row, consignment)
         body = json.dumps(body)
         try:
-            answer = requests.post('http://10.23.4.203:8004', data=body, headers=self.headers, timeout=120)
+            answer = requests.post('http://service_consignment:8004', data=body, headers=self.headers, timeout=120)
             if answer.status_code != 200:
                 return None
             result = answer.json()
