@@ -26,6 +26,7 @@ headers_eng: dict = {
     "Отправитель": "shipper_name",
     "Получатель": "consignee_name",
     "Наименование товара": "goods_name",
+    "Наименование": "goods_name",
     "Номер коносамента": "consignment",
     "Экспедитор": "expeditor",
     "ИНН Грузоотправителя": "shipper_inn",
