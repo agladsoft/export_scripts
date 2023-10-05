@@ -5,6 +5,7 @@ import json
 import contextlib
 import numpy as np
 import pandas as pd
+from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
 
@@ -38,7 +39,7 @@ dict_types: dict = {
 }
 
 
-date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y")
+date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S")
 
 
 class Export(object):
@@ -47,12 +48,21 @@ class Export(object):
         self.output_folder: str = output_folder
 
     @staticmethod
-    def change_type_and_values(df: DataFrame) -> None:
+    def convert_format_date(date: str) -> Optional[str]:
+        """
+        Convert to a date type.
+        """
+        for date_format in date_formats:
+            with contextlib.suppress(ValueError):
+                return str(datetime.strptime(date, date_format).date())
+        return None
+
+    def change_type_and_values(self, df: DataFrame) -> None:
         """
         Change data types or changing values.
         """
         with contextlib.suppress(Exception):
-            df['shipment_date'] = df['shipment_date'].dt.date.astype(str)
+            df['shipment_date'] = df['shipment_date'].apply(lambda x: self.convert_format_date(str(x)))
 
     def add_new_columns(self, df: DataFrame, parsed_on: str) -> None:
         """
