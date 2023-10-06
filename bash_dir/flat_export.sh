@@ -1,36 +1,45 @@
 #!/bin/bash
 
-xls_path="${XL_IDP_PATH_EXPORT}/lines_${XL_IMPORT_TERMINAL}/flat_export_${XL_IMPORT_TERMINAL}"
+# Declare a string array with type
+declare -a DirsArray=(
+    "flat_export_nutep_tracking"
+    "flat_export_nutep_tracking_update"
+)
 
-done_path="${xls_path}"/done
-if [ ! -d "$done_path" ]; then
-  mkdir "${done_path}"
-fi
+for dir in "${DirsArray[@]}"; do
 
-json_path="${xls_path}"/json
-if [ ! -d "$json_path" ]; then
-  mkdir "${json_path}"
-fi
+    xls_path="${XL_IDP_PATH_EXPORT}/lines_${XL_IMPORT_TERMINAL}/${dir}"
 
-find "${xls_path}" -maxdepth 1 -type f \( -name "*.xls*" -or -name "*.XLS*" -or -name "*.xml" \) ! -newermt '3 seconds ago' -print0 | while read -d $'\0' file
-do
+    done_path="${xls_path}"/done
+    if [ ! -d "$done_path" ]; then
+      mkdir "${done_path}"
+    fi
 
-  if [[ "${file}" == *"error_"* ]];
-  then
-    continue
-  fi
+    json_path="${xls_path}"/json
+    if [ ! -d "$json_path" ]; then
+      mkdir "${json_path}"
+    fi
 
-	mime_type=$(file -b --mime-type "$file")
-  echo "'${file} - ${mime_type}'"
+    find "${xls_path}" -maxdepth 1 -type f \( -name "*.xls*" -or -name "*.XLS*" -or -name "*.xml" \) ! -newermt '3 seconds ago' -print0 | while read -d $'\0' file
+    do
 
-	# Will convert csv to json
-	python3 ${XL_IDP_ROOT_EXPORT}/scripts/flat_export.py "${file}" "${json_path}"
+      if [[ "${file}" == *"error_"* ]];
+      then
+        continue
+      fi
 
-  if [ $? -eq 0 ]
-	then
-	  mv "${file}" "${done_path}"
-	else
-	  mv "${file}" "${xls_path}/error_$(basename "${file}")"
-	fi
+        mime_type=$(file -b --mime-type "$file")
+      echo "'${file} - ${mime_type}'"
 
+        # Will convert csv to json
+        python3 ${XL_IDP_ROOT_EXPORT}/scripts/flat_export.py "${file}" "${json_path}"
+
+      if [ $? -eq 0 ]
+        then
+          mv "${file}" "${done_path}"
+        else
+          mv "${file}" "${xls_path}/error_$(basename "${file}")"
+        fi
+
+    done
 done
