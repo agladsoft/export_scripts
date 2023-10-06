@@ -125,7 +125,7 @@ class ParsedDf:
 
     @staticmethod
     def get_consignment(row):
-        if row.get('line').upper() in ['ARKAS', 'MSC']:
+        if row.get('line', '').upper() in ['ARKAS', 'MSC']:
             return 'container_number'
         else:
             if 'booking' in row:
@@ -137,7 +137,7 @@ class ParsedDf:
         logging.info("Запросы к микросервису")
         data = {}
         for index, row in self.df.iterrows():
-            if row.get('line').upper() not in LINES:
+            if row.get('line', '').upper() not in LINES:
                 continue
             if self.check_lines(row) and any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
