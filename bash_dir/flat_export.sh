@@ -2,8 +2,8 @@
 
 # Declare a string array with type
 declare -a DirsArray=(
-    "flat_export_nutep_tracking"
-    "flat_export_nutep_tracking_update"
+    "flat_export_${XL_IMPORT_TERMINAL}_tracking"
+    "flat_export_${XL_IMPORT_TERMINAL}_tracking_update"
 )
 
 for dir in "${DirsArray[@]}"; do
