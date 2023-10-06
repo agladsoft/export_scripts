@@ -75,7 +75,7 @@ class ParsedDf:
 
     @staticmethod
     def check_lines(row: dict) -> bool:
-        if row.get('line').upper() in HEUNG_AND_SINOKOR:
+        if row.get('line', '').upper() in HEUNG_AND_SINOKOR:
             return False
         return True
 
