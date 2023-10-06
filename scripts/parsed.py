@@ -24,7 +24,7 @@ class Parsed:
         body = self.body(row, line)
         body = json.dumps(body)
         try:
-            answer = requests.post(self.url, data=body, headers=self.headers)
+            answer = requests.post(self.url, data=body, headers=self.headers, timeout=120)
             if answer.status_code != 200:
                 return None
             result = answer.json()
@@ -78,6 +78,7 @@ class ParsedDf:
         if row.get('line').upper() in HEUNG_AND_SINOKOR:
             return False
         return True
+
     @staticmethod
     def get_direction(direction):
         if direction.lower() in IMPORT:
@@ -96,11 +97,24 @@ class ParsedDf:
         }
         return data
 
+    def get_msc(self, row, consignment):
+        body = self.body(row, consignment)
+        body = json.dumps(body)
+        try:
+            answer = requests.post('http://service_consignment:8004', data=body, headers=self.headers, timeout=120)
+            if answer.status_code != 200:
+                return None
+            result = answer.json()
+        except Exception as ex:
+            logging.info(f'Ошибка {ex}')
+            return None
+        return result
+
     def get_result(self, row, consignment):
         body = self.body(row, consignment)
         body = json.dumps(body)
         try:
-            answer = requests.post(self.url, data=body, headers=self.headers)
+            answer = requests.post(self.url, data=body, headers=self.headers, timeout=120)
             if answer.status_code != 200:
                 return None
             result = answer.json()
@@ -131,7 +145,10 @@ class ParsedDf:
             if row.get(consignment, False) not in data:
                 data[row.get(consignment)] = {}
                 if row.get('enforce_auto_tracking', True):
-                    port = self.get_result(row, consignment)
+                    if row.get('line', '').strip() in ['MSC', 'msc']:
+                        port = self.get_msc(row, consignment)
+                    else:
+                        port = self.get_result(row, consignment)
                     self.write_port(index, port)
                     try:
                         data[row.get(consignment)].setdefault('tracking_seaport',
