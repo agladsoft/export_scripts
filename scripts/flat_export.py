@@ -6,6 +6,7 @@ import contextlib
 import numpy as np
 import pandas as pd
 from typing import Optional
+from parsed import ParsedDf
 from pandas import DataFrame
 from datetime import datetime
 
@@ -25,6 +26,7 @@ headers_eng: dict = {
     "Отправитель": "shipper_name",
     "Получатель": "consignee_name",
     "Наименование товара": "goods_name",
+    "Наименование": "goods_name",
     "Номер коносамента": "consignment",
     "Экспедитор": "expeditor",
     "ИНН Грузоотправителя": "shipper_inn",
@@ -99,14 +101,12 @@ class Export(object):
         """
         df: DataFrame = pd.read_excel(self.input_file_path, dtype=dict_types)
         df = df.dropna(axis=0, how='all')
-        original_columns = list(df.columns)
         df = df.rename(columns=headers_eng)
-        renamed_columns = list(df.columns)
-        df = df.drop(columns=set(original_columns) & set(renamed_columns))
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         parsed_on: str = self.check_date_in_begin_file()
         self.add_new_columns(df, parsed_on)
         self.change_type_and_values(df)
+        ParsedDf(df).get_port()
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
