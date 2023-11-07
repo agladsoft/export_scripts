@@ -40,7 +40,6 @@ dict_types: dict = {
     "ТНВЭД": str
 }
 
-
 date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S")
 
 

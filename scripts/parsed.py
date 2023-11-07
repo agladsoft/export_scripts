@@ -137,7 +137,7 @@ class ParsedDf:
         logging.info("Запросы к микросервису")
         data = {}
         for index, row in self.df.iterrows():
-            if row.get('line', '').upper() not in LINES:
+            if row.get('line', '').upper() not in LINES or row.get('tracking_seaport') is not None:
                 continue
             if self.check_lines(row) and any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
