@@ -5,7 +5,7 @@ import requests
 
 class Parsed:
     def __init__(self):
-        self.url = "http://158.160.77.121:8005"
+        self.url = "http://158.160.77.121:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -68,7 +68,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "http://158.160.77.121:8005"
+        self.url = "http://158.160.77.121:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -101,7 +101,7 @@ class ParsedDf:
         body = self.body(row, consignment)
         body = json.dumps(body)
         try:
-            answer = requests.post('http://158.160.77.121:8005', data=body, headers=self.headers, timeout=120)
+            answer = requests.post('http://158.160.77.121:8004', data=body, headers=self.headers, timeout=120)
             if answer.status_code != 200:
                 return None
             result = answer.json()
