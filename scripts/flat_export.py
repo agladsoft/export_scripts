@@ -9,7 +9,10 @@ from typing import Optional
 from parsed import ParsedDf
 from pandas import DataFrame
 from datetime import datetime
+from notifiers import get_notifier
 
+TOKEN = '6557326533:AAHy6ls9LhTVTGztix8PUSK7BUSaHVEojXc'
+CHAT_ID = '-1002064780308'
 headers_eng: dict = {
     "Терминал": "terminal",
     "Линия": "line",
@@ -41,6 +44,12 @@ dict_types: dict = {
 }
 
 date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S")
+
+
+
+def telegram(message):
+    teg = get_notifier('telegram')
+    teg.notify(token=TOKEN, chat_id=CHAT_ID, message=message)
 
 
 class Export(object):
@@ -81,6 +90,7 @@ class Export(object):
         date_previous: re.Match = re.match(r'\d{2,4}.\d{1,2}', os.path.basename(self.input_file_path))
         date_previous: str = f'{date_previous.group()}.01' if date_previous else date_previous
         if date_previous is None:
+            telegram(f'Не указана дата в файле {self.input_file_path}')
             raise AssertionError('Date not in file name!')
         else:
             return str(datetime.strptime(date_previous, "%Y.%m.%d").date())
