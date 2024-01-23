@@ -88,6 +88,13 @@ class Report_Order(object):
         df['original_file_name'] = os.path.basename(self.input_file_path)
         df['original_file_parsed_on'] = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+    def convert_format_to_date(self,df: DataFrame) -> None:
+        df["departure_date"] = df["departure_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["shipped"] = df["shipped"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["date_doc"] = df["date_doc"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+
     def write_to_json(self, parsed_data: list) -> None:
         """
         Write data to json.
@@ -106,8 +113,8 @@ class Report_Order(object):
         self.rename_columns(df)
         self.change_columns(df)
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-        # df["date"] = df["date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         self.add_new_columns(df)
+        self.convert_format_to_date(df)
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
