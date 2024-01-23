@@ -27,7 +27,7 @@ HEADERS_ENG: dict = {
     ("Порт назначения",): "port_of_destination",
     ("Судно",): "ship_name",
     ("Линия",): "line",
-    ("№ Док.",): "no_doc.",
+    ("№ Док.",): "no_doc",
     ("Тип документа",): "doc_type",
     ("Дата Док.",): "date_doc",
     ("Тип пор.",): "order_type",
@@ -115,8 +115,9 @@ class Report_Order(object):
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         self.add_new_columns(df)
         self.convert_format_to_date(df)
+        df.replace('', np.nan, inplace=True)
+        df["container_size"] = pd.to_numeric(df["container_size"], errors='coerce').astype('Int64')
         df = df.replace({np.nan: None, "NaT": None})
-        df["container_size"] = df["container_size"].apply(lambda x: int(x) if x else None)
         self.write_to_json(df.to_dict('records'))
 
 
