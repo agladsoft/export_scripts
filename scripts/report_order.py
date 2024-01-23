@@ -116,6 +116,7 @@ class Report_Order(object):
         self.add_new_columns(df)
         self.convert_format_to_date(df)
         df = df.replace({np.nan: None, "NaT": None})
+        df["container_size"] = df["container_size"].apply(lambda x: int(x) if x else None)
         self.write_to_json(df.to_dict('records'))
 
 
