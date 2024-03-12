@@ -31,8 +31,10 @@ HEADERS_ENG: dict = {
     ("Тип документа",): "doc_type",
     ("Дата Док.",): "date_doc",
     ("Тип пор.",): "order_type",
-    ("Сост.пор.",): "order_status"
-
+    ("ТНВЭД",): "tnved",
+    ("Номер ГТД",): "gtd_number",
+    ("Получатель",): "consignee_name",
+    ("Отправитель",): "shipper_name"
 }
 
 DATE_FORMATS: tuple = ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M")
@@ -88,7 +90,7 @@ class Report_Order(object):
         df['original_file_name'] = os.path.basename(self.input_file_path)
         df['original_file_parsed_on'] = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    def convert_format_to_date(self,df: DataFrame) -> None:
+    def convert_format_to_date(self, df: DataFrame) -> None:
         df["departure_date"] = df["departure_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
@@ -108,7 +110,7 @@ class Report_Order(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
-        df: DataFrame = pd.read_excel(self.input_file_path, skiprows=1)
+        df: DataFrame = pd.read_excel(self.input_file_path, skiprows=1, dtype={"№ конт.": str})
         df = df.dropna(axis=0, how='all')
         self.rename_columns(df)
         self.change_columns(df)
