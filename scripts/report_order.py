@@ -8,6 +8,7 @@ import pandas as pd
 from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
+from parsed import ParsedDf
 
 HEADERS_ENG: dict = {
     ("Дата отхода с/з",): "departure_date",
@@ -118,6 +119,8 @@ class Report_Order(object):
         self.add_new_columns(df)
         self.convert_format_to_date(df)
         df["container_size"] = pd.to_numeric(df["container_size"], errors='coerce').astype('Int64')
+        df = df.replace({np.nan: None, "NaT": None})
+        ParsedDf(df).get_port()
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
