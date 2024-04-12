@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import itertools
@@ -8,13 +9,15 @@ import pandas as pd
 from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
+from __init__ import *
 from parsed import ParsedDf
 
 HEADERS_ENG: dict = {
     ("Дата отхода с/з",): "departure_date",
     ("№ пор.",): "order_number_full",
     ("Дата пор.",): "date_order",
-    ("Экспедитор",): "forwarder",
+    ("Экспедитор",): "expeditor",
+    ("Рейс",): "voyage",
     ("Инд.",): "container",
     ("№ конт.",): "number",
     ("Тип",): "type",
@@ -24,7 +27,7 @@ HEADERS_ENG: dict = {
     ("Нетто",): "net",
     ("Брутто",): "gross",
     ("Прибыл",): "arrived",
-    ("Отгружен",): "shipped",
+    ("Отгружен",): "shipment_date",
     ("Порт назначения",): "port_of_destination",
     ("Судно",): "ship_name",
     ("Линия",): "line",
@@ -35,7 +38,10 @@ HEADERS_ENG: dict = {
     ("ТНВЭД",): "tnved",
     ("Номер ГТД",): "gtd_number",
     ("Получатель",): "consignee_name",
-    ("Отправитель",): "shipper_name"
+    ("Отправитель",): "shipper_name",
+    ("Порт выгрузки",): "tracking_seaport",
+    ("Сост.пор.",): "order_status",
+    ("Страна выгрузки",): "tracking_country",
 }
 
 DATE_FORMATS: tuple = ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M")
@@ -82,10 +88,24 @@ class Report_Order(object):
         self.change_type(df)
         self.change_container(df)
 
-    def add_new_columns(self, df: DataFrame) -> None:
+    def check_date_in_begin_file(self) -> str:
+        """
+        Check the date at the beginning of the file.
+        """
+        date_previous: re.Match = re.match(r'\d{2,4}.\d{1,2}', os.path.basename(self.input_file_path))
+        date_previous: str = f'{date_previous.group()}.01' if date_previous else date_previous
+        if date_previous is None:
+            telegram(f'Не указана дата в файле {self.input_file_path}')
+            raise AssertionError('Date not in file name!')
+        else:
+            return str(datetime.strptime(date_previous, "%Y.%m.%d").date())
+
+    def add_new_columns(self, df: DataFrame, parsed_on) -> None:
         """
         Add new columns.
         """
+        df['parsed_on'] = parsed_on
+        df['terminal'] = 'НУТЭП'
         # df['month'] = pd.to_datetime(df['date']).dt.month
         # df['year'] = pd.to_datetime(df['date']).dt.year
         df['original_file_name'] = os.path.basename(self.input_file_path)
@@ -95,7 +115,7 @@ class Report_Order(object):
         df["departure_date"] = df["departure_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
-        df["shipped"] = df["shipped"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["shipment_date"] = df["shipment_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_doc"] = df["date_doc"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
 
     def write_to_json(self, parsed_data: list) -> None:
@@ -113,14 +133,15 @@ class Report_Order(object):
         """
         df: DataFrame = pd.read_excel(self.input_file_path, skiprows=1, dtype={"№ конт.": str})
         df = df.dropna(axis=0, how='all')
+        parsed_on = self.check_date_in_begin_file()
         self.rename_columns(df)
         self.change_columns(df)
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
-        self.add_new_columns(df)
+        self.add_new_columns(df, parsed_on)
         self.convert_format_to_date(df)
         df["container_size"] = pd.to_numeric(df["container_size"], errors='coerce').astype('Int64')
         df = df.replace({np.nan: None, "NaT": None})
-        ParsedDf(df).get_port()
+        # ParsedDf(df).get_port()
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
@@ -128,4 +149,3 @@ class Report_Order(object):
 if __name__ == "__main__":
     report_order: Report_Order = Report_Order(sys.argv[1], sys.argv[2])
     report_order.main()
-
