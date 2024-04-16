@@ -13,7 +13,7 @@ from __init__ import *
 from parsed import ParsedDf
 
 HEADERS_ENG: dict = {
-    ("Дата отхода с/з",): "departure_date",
+    ("Дата отхода с/з",): "shipment_date",
     ("№ пор.",): "order_number_full",
     ("Дата пор.",): "date_order",
     ("Экспедитор",): "expeditor",
@@ -27,7 +27,7 @@ HEADERS_ENG: dict = {
     ("Нетто",): "net",
     ("Брутто",): "gross",
     ("Прибыл",): "arrived",
-    ("Отгружен",): "shipment_date",
+    ("Отгружен",): "shipped",
     ("Порт назначения",): "port_of_destination",
     ("Судно",): "ship_name",
     ("Линия",): "line",
@@ -45,6 +45,10 @@ HEADERS_ENG: dict = {
 }
 
 DATE_FORMATS: tuple = ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M")
+
+
+class MissingCulumnName(Exception):
+    pass
 
 
 class Report_Order(object):
@@ -72,6 +76,8 @@ class Report_Order(object):
                 column_strip: str = column.strip()
                 if column_strip == column_eng.strip():
                     dict_columns_eng[column] = HEADERS_ENG[columns]
+        if len(dict_columns_eng) != len(df.iloc[0]):
+            raise MissingCulumnName('Column naming error')
         df.rename(columns=dict_columns_eng, inplace=True)
 
     @staticmethod
@@ -83,6 +89,12 @@ class Report_Order(object):
     def change_container(df: DataFrame) -> None:
         df['container_number'] = df['container'].str.strip() + df['number'].str.strip()
         df.drop(columns=['container', 'number'], inplace=True)
+
+    @staticmethod
+    def change_goods_name(goods_name: str) -> str:
+        if goods_name:
+            return goods_name
+        return "ПОРОЖНИЙ КОНТЕЙНЕР"
 
     def change_columns(self, df: DataFrame) -> None:
         self.change_type(df)
@@ -112,7 +124,7 @@ class Report_Order(object):
         df['original_file_parsed_on'] = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     def convert_format_to_date(self, df: DataFrame) -> None:
-        df["departure_date"] = df["departure_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["shipped"] = df["shipped"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["shipment_date"] = df["shipment_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
@@ -141,6 +153,7 @@ class Report_Order(object):
         self.convert_format_to_date(df)
         df["container_size"] = pd.to_numeric(df["container_size"], errors='coerce').astype('Int64')
         df = df.replace({np.nan: None, "NaT": None})
+        df["goods_name"] = df["goods_name"].apply(lambda x: self.change_goods_name(x))
         # ParsedDf(df).get_port()
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
