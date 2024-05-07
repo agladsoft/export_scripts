@@ -1,6 +1,8 @@
+import time
 import json
 import logging
 import requests
+from typing import Optional
 
 
 class Parsed:
@@ -97,31 +99,20 @@ class ParsedDf:
         }
         return data
 
-    def get_msc(self, row, consignment):
-        body = self.body(row, consignment)
-        body = json.dumps(body)
-        try:
-            answer = requests.post('http://158.160.77.121:8004', data=body, headers=self.headers, timeout=30)
-            if answer.status_code != 200:
-                return None
-            result = answer.json()
-        except Exception as ex:
-            logging.info(f'Ошибка {ex}')
+    def get_port_with_recursion(self, number_attempts: int, row, consignment) -> Optional[str]:
+        if number_attempts == 0:
             return None
-        return result
-
-    def get_result(self, row, consignment):
-        body = self.body(row, consignment)
-        body = json.dumps(body)
         try:
-            answer = requests.post(self.url, data=body, headers=self.headers, timeout=120)
-            if answer.status_code != 200:
-                return None
-            result = answer.json()
+            body = self.body(row, consignment)
+            body = json.dumps(body)
+            response = requests.post(self.url, data=body, headers=self.headers, timeout=120)
+            response.raise_for_status()
+            return response.json()
         except Exception as ex:
-            logging.info(f'Ошибка {ex}')
-            return None
-        return result
+            logging.error(f"Exception is {ex}")
+            time.sleep(30)
+            number_attempts -= 1
+            self.get_port_with_recursion(number_attempts, row, consignment)
 
     @staticmethod
     def get_consignment(row):
@@ -146,10 +137,8 @@ class ParsedDf:
             if row.get(consignment, False) not in data:
                 data[row.get(consignment)] = {}
                 if row.get('enforce_auto_tracking', True):
-                    if row.get('line', '').strip() in ['MSC', 'msc']:
-                        port = self.get_msc(row, consignment)
-                    else:
-                        port = self.get_result(row, consignment)
+                    number_attempts = 3
+                    port = self.get_port_with_recursion(number_attempts, row, consignment)
                     self.write_port(index, port)
                     try:
                         data[row.get(consignment)].setdefault('tracking_seaport',
