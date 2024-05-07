@@ -139,7 +139,8 @@ class ParsedDf:
         for index, row in self.df.iterrows():
             if row.get('line', '').upper() not in LINES or row.get('tracking_seaport') is not None:
                 continue
-            if self.check_lines(row) and any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
+            if self.check_lines(row) and row.get('goods_name') and \
+                    any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
             consignment = self.get_consignment(row)
             if row.get(consignment, False) not in data:
