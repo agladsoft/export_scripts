@@ -10,7 +10,7 @@ from pandas import DataFrame
 from datetime import datetime
 
 HEADERS_ENG: dict = {
-    ("Дата отхода с/з",): "departure_date",
+    ("Дата отхода с/з",): "shipment_date",
     ("№ пор.",): "order_number_full",
     ("Дата пор.",): "date_order",
     ("Экспедитор",): "forwarder",
@@ -91,7 +91,7 @@ class Report_Order_Update(object):
         df['original_file_parsed_on'] = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
     def convert_format_to_date(self, df: DataFrame) -> None:
-        df["departure_date"] = df["departure_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["shipment_date"] = df["shipment_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["shipped"] = df["shipped"].apply(lambda x: self.convert_format_date(str(x)) if x else None)

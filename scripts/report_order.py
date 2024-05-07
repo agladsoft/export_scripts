@@ -6,11 +6,11 @@ import itertools
 import contextlib
 import numpy as np
 import pandas as pd
+from __init__ import *
+from parsed import ParsedDf
 from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
-from __init__ import *
-from parsed import ParsedDf
 
 HEADERS_ENG: dict = {
     ("Дата отхода с/з",): "shipment_date",
@@ -154,7 +154,7 @@ class Report_Order(object):
         df["container_size"] = pd.to_numeric(df["container_size"], errors='coerce').astype('Int64')
         df = df.replace({np.nan: None, "NaT": None})
         df["goods_name"] = df["goods_name"].apply(lambda x: self.change_goods_name(x))
-        # ParsedDf(df).get_port()
+        ParsedDf(df).get_port()
         df = df.replace({np.nan: None, "NaT": None})
         self.write_to_json(df.to_dict('records'))
 
