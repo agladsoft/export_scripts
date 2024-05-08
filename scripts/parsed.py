@@ -1,3 +1,4 @@
+import os
 import time
 import json
 import logging
@@ -7,7 +8,7 @@ from typing import Optional
 
 class Parsed:
     def __init__(self):
-        self.url = "http://158.160.77.121:8004"
+        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -70,7 +71,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "http://158.160.77.121:8004"
+        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
