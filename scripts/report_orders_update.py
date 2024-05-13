@@ -5,6 +5,7 @@ import itertools
 import contextlib
 import numpy as np
 import pandas as pd
+from __init__ import *
 from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
@@ -104,7 +105,7 @@ class Report_Order_Update(object):
         basename: str = os.path.basename(self.input_file_path)
         output_file_path: str = os.path.join(self.output_folder, f'{basename}.json')
         with open(f"{output_file_path}", 'w', encoding='utf-8') as f:
-            json.dump(parsed_data, f, ensure_ascii=False, indent=4)
+            json.dump(parsed_data, f, ensure_ascii=False, indent=4, default=serialize_datetime)
 
     def main(self) -> None:
         """

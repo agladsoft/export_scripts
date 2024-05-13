@@ -16,3 +16,9 @@ def telegram(message):
     params = {"chat_id": f"{chat_id}/{topic}", "text": message,
               'reply_to_message_id': message_id}  # Добавляем /2 для указания второго подканала
     response = requests.get(url, params=params)
+
+
+def serialize_datetime(obj):
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type not serializable")
