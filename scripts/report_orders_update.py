@@ -97,7 +97,7 @@ class Report_Order_Update(object):
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["shipped"] = df["shipped"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_doc"] = df["date_doc"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
-        df["parsed_on"] = df["date_doc"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
+        df["parsed_on"] = df["parsed_on"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
 
     def write_to_json(self, parsed_data: list) -> None:
         """
