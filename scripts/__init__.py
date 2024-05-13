@@ -1,3 +1,5 @@
+from datetime import datetime, date
+
 TOKEN = '6557326533:AAHy6ls9LhTVTGztix8PUSK7BUSaHVEojXc'
 CHAT_ID = '-1002064780308'
 TOPIC = '1069'
