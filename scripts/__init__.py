@@ -1,8 +1,13 @@
 import os
+import time
+
 import requests
 from dotenv import load_dotenv
 from datetime import datetime, date
+from loguru import logger
 
+logger.add(f"file_{time.strftime('%Y-%m-%d')}.log", format="{time} {level} {file.name}:{line} {message}",
+           level="DEBUG", rotation="15 MB")
 
 load_dotenv()
 

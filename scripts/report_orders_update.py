@@ -121,6 +121,7 @@ class Report_Order_Update(object):
 
     def convert_format_to_date(self, df: DataFrame) -> None:
         """convert format to date."""
+        logger.info("Converting the format of the date")
         df["shipment_date"] = df["shipment_date"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["date_order"] = df["date_order"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
         df["arrived"] = df["arrived"].apply(lambda x: self.convert_format_date(str(x)) if x else None)
@@ -186,13 +187,20 @@ class Report_Order_Update(object):
 
     def update_date_in_table(self, df: DataFrame) -> None:
         """update data in table clickhouse to uuid."""
+        errors = []
+        logger.info("Updating data in the table export clickhouse")
         for index, row in df.iterrows():
             try:
                 self.clickhouse_update(row)
             except Exception as ex:
-                telegram(f"Ошибка при обновлении данных в таблице export clickhouse"
-                         f"uuid: {row.get('uuid')}")
+                logger.info(f"Error updating data in the export clickhouse table : \n{ex}")
+                errors.append(row["uuid"])
                 continue
+        if errors:
+            errors = '\n'.join(errors)
+            logger.info(f"Error updating data in the export clickhouse table : \n{errors}")
+            telegram(f"Ошибка при обновлении данных в таблице export clickhouse"
+                     f"uuid: {errors}")
 
     def write_to_json(self, parsed_data: list) -> None:
         """
@@ -207,6 +215,7 @@ class Report_Order_Update(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
+        logger.info("Reading the Excel file")
         df: DataFrame = pd.read_excel(self.input_file_path, dtype={"№ конт.": str})
         df = df.dropna(axis=0, how='all')
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
