@@ -66,8 +66,9 @@ class Report_Order_Update(object):
         try:
             client: Client = get_client(host=get_my_env_var('HOST'), database=get_my_env_var('DATABASE'),
                                         username=get_my_env_var('USERNAME_DB'), password=get_my_env_var('PASSWORD'))
-            client.query("SET allow_experimental_lightweight_delete=1")
+            logger.info('Connection to ClickHouse is successful')
         except Exception as ex_connect:
+            logger.info(f"Error connecting to ClickHouse: {ex_connect}")
             sys.exit(1)
         return client
 
@@ -222,6 +223,7 @@ class Report_Order_Update(object):
         self.convert_format_to_date(df)
         df = df.replace({np.nan: None, "NaT": None})
         self.update_date_in_table(df)
+        logger.info("Finished updating data in the table export clickhouse")
 
 
 if __name__ == "__main__":
