@@ -135,6 +135,7 @@ class Report_Order_Update(object):
         if not value:
             return 'NULL'
         if flag:
+            value = str(value).replace("'", "''")
             return f"'{value}'"
         return value
 
@@ -200,7 +201,7 @@ class Report_Order_Update(object):
         if errors:
             errors = '\n'.join(errors)
             logger.info(f"Error updating data in the export clickhouse table : \n{errors}")
-            telegram(f"Ошибка при обновлении данных в таблице export clickhouse"
+            telegram(f"Ошибка при обновлении данных в таблице export clickhouse\n"
                      f"uuid: {errors}")
 
     def write_to_json(self, parsed_data: list) -> None:
@@ -216,7 +217,7 @@ class Report_Order_Update(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
-        logger.info("Reading the Excel file")
+        logger.info(f"Reading the Excel file : {os.path.basename(self.input_file_path)}")
         df: DataFrame = pd.read_excel(self.input_file_path, dtype={"№ конт.": str})
         df = df.dropna(axis=0, how='all')
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
