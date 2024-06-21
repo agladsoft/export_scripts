@@ -12,7 +12,6 @@ from pandas import DataFrame
 from datetime import datetime
 from notifiers import get_notifier
 
-TOKEN = '6557326533:AAHy6ls9LhTVTGztix8PUSK7BUSaHVEojXc'
 CHAT_ID = '-1002064780308'
 TOPIC = '1069'
 ID = '1071'
@@ -55,7 +54,7 @@ def telegram(message):
     # teg = get_notifier('telegram')
     # teg.notify(token=TOKEN, chat_id=CHAT_ID, message=message)
     chat_id = CHAT_ID
-    token = TOKEN
+    token = os.environ["TOKEN_TELEGRAM"]
     topic = TOPIC
     message_id = ID
     # teg.notify(token=get_my_env_var('TOKEN'), chat_id=get_my_env_var('CHAT_ID'), message=message)
