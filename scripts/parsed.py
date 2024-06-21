@@ -1,11 +1,14 @@
+import os
+import time
 import json
 import logging
 import requests
+from typing import Optional
 
 
 class Parsed:
     def __init__(self):
-        self.url = "http://158.160.77.121:8004"
+        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -68,7 +71,7 @@ EXPORT = ['export', 'экспорт']
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = "http://158.160.77.121:8004"
+        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -97,31 +100,20 @@ class ParsedDf:
         }
         return data
 
-    def get_msc(self, row, consignment):
-        body = self.body(row, consignment)
-        body = json.dumps(body)
-        try:
-            answer = requests.post('http://158.160.77.121:8004', data=body, headers=self.headers, timeout=120)
-            if answer.status_code != 200:
-                return None
-            result = answer.json()
-        except Exception as ex:
-            logging.info(f'Ошибка {ex}')
+    def get_port_with_recursion(self, number_attempts: int, row, consignment) -> Optional[str]:
+        if number_attempts == 0:
             return None
-        return result
-
-    def get_result(self, row, consignment):
-        body = self.body(row, consignment)
-        body = json.dumps(body)
         try:
-            answer = requests.post(self.url, data=body, headers=self.headers, timeout=120)
-            if answer.status_code != 200:
-                return None
-            result = answer.json()
+            body = self.body(row, consignment)
+            body = json.dumps(body)
+            response = requests.post(self.url, data=body, headers=self.headers, timeout=120)
+            response.raise_for_status()
+            return response.json()
         except Exception as ex:
-            logging.info(f'Ошибка {ex}')
-            return None
-        return result
+            logging.error(f"Exception is {ex}")
+            time.sleep(30)
+            number_attempts -= 1
+            self.get_port_with_recursion(number_attempts, row, consignment)
 
     @staticmethod
     def get_consignment(row):
@@ -139,16 +131,15 @@ class ParsedDf:
         for index, row in self.df.iterrows():
             if row.get('line', '').upper() not in LINES or row.get('tracking_seaport') is not None:
                 continue
-            if self.check_lines(row) and any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
+            if self.check_lines(row) and row.get('goods_name') and \
+                    any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
                 continue
             consignment = self.get_consignment(row)
             if row.get(consignment, False) not in data:
                 data[row.get(consignment)] = {}
                 if row.get('enforce_auto_tracking', True):
-                    if row.get('line', '').strip() in ['MSC', 'msc']:
-                        port = self.get_msc(row, consignment)
-                    else:
-                        port = self.get_result(row, consignment)
+                    number_attempts = 3
+                    port = self.get_port_with_recursion(number_attempts, row, consignment)
                     self.write_port(index, port)
                     try:
                         data[row.get(consignment)].setdefault('tracking_seaport',
