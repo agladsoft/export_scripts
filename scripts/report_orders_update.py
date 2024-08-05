@@ -213,6 +213,20 @@ class Report_Order_Update(object):
         with open(f"{output_file_path}", 'w', encoding='utf-8') as f:
             json.dump(parsed_data, f, ensure_ascii=False, indent=4, default=serialize_datetime)
 
+    @staticmethod
+    def convert_format_bool(value: Optional[float]) -> Optional[bool]:
+        if value is None:
+            return None
+        elif value == 0.0:
+            return False
+        elif value == 1.0:
+            return True
+        return value
+
+    def convert_df_format_bool(self, df: DataFrame) -> None:
+        df["is_auto_tracking"] = df["is_auto_tracking"].apply(lambda x: self.convert_format_bool(x))
+        df["is_auto_tracking_ok"] = df["is_auto_tracking_ok"].apply(lambda x: self.convert_format_bool(x))
+
     def main(self) -> None:
         """
         The main function where we read the Excel file and write the file to json.
@@ -223,6 +237,7 @@ class Report_Order_Update(object):
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
         self.convert_format_to_date(df)
         df = df.replace({np.nan: None, "NaT": None})
+        self.convert_df_format_bool(df)
         self.update_date_in_table(df)
         logger.info("Finished updating data in the table export clickhouse")
 
