@@ -1,77 +1,77 @@
+import re
 import os
+import sys
 import time
 import json
 import logging
 import requests
 from typing import Optional
+from dotenv import load_dotenv
+from clickhouse_connect import get_client
+from clickhouse_connect.driver import Client
 
-
-class Parsed:
-    def __init__(self):
-        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
-        self.headers = {
-            'Content-Type': 'application/json'
-        }
-
-    @staticmethod
-    def body(row, line):
-        data = {
-            'line': line,
-            'consignment': row['consignment'],
-            'direction': 'import'
-
-        }
-        return data
-
-    def get_result(self, row, line):
-        body = self.body(row, line)
-        body = json.dumps(body)
-        try:
-            answer = requests.post(self.url, data=body, headers=self.headers, timeout=120)
-            if answer.status_code != 200:
-                return None
-            result = answer.json()
-        except Exception as ex:
-            logging.info(f'Ошибка {ex}')
-            return None
-        return result
-
-    def get_port(self, row, line):
-        self.add_new_columns(row)
-        port = self.get_result(row, line)
-        self.write_port(row, port)
-
-    @staticmethod
-    def write_port(row, port):
-        row['is_auto_tracking'] = True
-        if port:
-            row['is_auto_tracking_ok'] = True
-            row['tracking_seaport'] = port
-        else:
-            row['is_auto_tracking_ok'] = False
-            row['tracking_seaport'] = None
-
-    @staticmethod
-    def add_new_columns(row):
-        if "enforce_auto_tracking" not in row:
-            row['is_auto_tracking'] = None
-
-
-LINES = ['СИНОКОР РУС ООО', 'HEUNG-A LINE CO., LTD', 'MSC', 'SINOKOR', 'SINAKOR', 'SKR', 'sinokor',
-         'ARKAS', 'arkas', 'Arkas',
-         'MSC', 'msc', 'Msc', 'SINOKOR', 'sinokor', 'Sinokor', 'SINAKOR', 'sinakor', 'HUENG-A LINE',
-         'HEUNG-A LINE CO., LTD', 'heung']
+# LINES = ['СИНОКОР РУС ООО', 'HEUNG-A LINE CO., LTD', 'MSC', 'SINOKOR', 'SINAKOR', 'SKR', 'sinokor',
+#          'ARKAS', 'arkas', 'Arkas',
+#          'MSC', 'msc', 'Msc', 'SINOKOR', 'sinokor', 'Sinokor', 'SINAKOR', 'sinakor', 'HUENG-A LINE',
+#          'HEUNG-A LINE CO., LTD', 'heung']
 HEUNG_AND_SINOKOR = ['СИНОКОР РУС ООО', 'HEUNG-A LINE CO., LTD', 'SINOKOR', 'SINAKOR', 'SKR', 'sinokor', 'HUENG-A LINE',
                      'HEUNG-A LINE CO., LTD', 'heung']
-
 IMPORT = ['импорт', 'import']
 EXPORT = ['export', 'экспорт']
 
+load_dotenv()
+
+
+def get_my_env_var(var_name: str) -> str:
+    try:
+        return os.environ[var_name]
+    except KeyError as e:
+        raise MissingEnvironmentVariable(f"{var_name} does not exist") from e
+
+
+class MissingEnvironmentVariable(Exception):
+    pass
+
+
+def clickhouse_client():
+    try:
+        client: Client = get_client(host=get_my_env_var('HOST'), database=get_my_env_var('DATABASE'),
+                                    username=get_my_env_var('USERNAME_DB'), password=get_my_env_var('PASSWORD'))
+        logging.info('Connection to ClickHouse is successful')
+    except Exception as ex_connect:
+        logging.info(f"Error connecting to ClickHouse: {ex_connect}")
+        sys.exit(1)
+    return client
+
+
+def uified_list_line_name():
+    client = clickhouse_client()
+    items = {}
+    line_unified_query = client.query(
+        f"SELECT * FROM reference_lines where line_unified in ('REEL SHIPPING','SAFETRANS')")
+    line_unified = line_unified_query.result_rows
+    for data in line_unified:
+        key, value = data[1], data[0]
+        if key not in items:
+            items[key] = [value]
+        else:
+            items[key].append(value)
+    return items
+
+
+def get_line_unified(item: dict, line_name: str):
+    for key, value in item.items():
+        if line_name in value:
+            return key
+    return line_name
+
+
+LINES = uified_list_line_name()
 
 class ParsedDf:
     def __init__(self, df):
         self.df = df
-        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:8004"
+        self.url = f"http://{os.environ['IP_ADDRESS_CONSIGNMENTS']}:{os.environ['PORT']}"
         self.headers = {
             'Content-Type': 'application/json'
         }
@@ -91,14 +91,18 @@ class ParsedDf:
         return direction
 
     @staticmethod
-    def body(row, consignment):
-        data = {
-            'line': row.get('line'),
-            'consignment': row.get(consignment),
-            'direction': row.get('direction', 'export')
+    def get_number_consignment(consignment):
+        lst_consignment: list = list(filter(None, re.split(r",|\s", consignment)))
+        return lst_consignment[0].strip() if len(lst_consignment) > 1 else consignment
 
+    def body(self, row, consignment):
+        consignment_number = self.get_number_consignment(row.get(consignment))
+        line_unified = get_line_unified(LINES, row.get('line'))
+        return {
+            'line': line_unified,
+            'consignment': consignment_number,
+            'direction': row.get('direction', 'import'),
         }
-        return data
 
     def get_port_with_recursion(self, number_attempts: int, row, consignment) -> Optional[str]:
         if number_attempts == 0:
@@ -128,8 +132,9 @@ class ParsedDf:
         self.add_new_columns()
         logging.info("Запросы к микросервису")
         data = {}
+        lines = [name for sublist in list(uified_list_line_name().values()) for name in sublist]
         for index, row in self.df.iterrows():
-            if row.get('line', '').upper() not in LINES or row.get('tracking_seaport') is not None:
+            if row.get('line', '').upper() not in lines or row.get('tracking_seaport') is not None:
                 continue
             if self.check_lines(row) and row.get('goods_name') and \
                     any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
@@ -177,6 +182,5 @@ class ParsedDf:
         return False
 
     def add_new_columns(self):
-        self.df['tracking_seaport'] = None
         if "enforce_auto_tracking" not in self.df.columns:
             self.df['is_auto_tracking'] = None
