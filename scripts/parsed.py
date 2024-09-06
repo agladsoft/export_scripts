@@ -59,6 +59,15 @@ def unified_list_line_name():
     return items
 
 
+def unified_list_line_name_skip():
+    client = clickhouse_client()
+    items = {}
+    line_unified_query = client.query(
+        f"SELECT * FROM reference_lines where line_unified in ('REEL SHIPPING','HEUNG-A LINE','SINOKOR')")
+    line_unified = line_unified_query.result_rows
+    return [i[0] for i in line_unified]
+
+
 def get_line_unified(item: dict, line_name: str):
     for key, value in item.items():
         if line_name in value:
@@ -67,6 +76,8 @@ def get_line_unified(item: dict, line_name: str):
 
 
 LINES = unified_list_line_name()
+HEUNG_AND_SINOKOR_REEL = unified_list_line_name_skip()
+
 
 class ParsedDf:
     def __init__(self, df):
@@ -78,7 +89,7 @@ class ParsedDf:
 
     @staticmethod
     def check_lines(row: dict) -> bool:
-        if row.get('line', '').upper() in HEUNG_AND_SINOKOR:
+        if row.get('line', '').upper() in HEUNG_AND_SINOKOR_REEL:
             return False
         return True
 
