@@ -126,7 +126,10 @@ class ParsedDf:
         else:
             if 'booking' in row:
                 return 'booking'
-            return 'consignment'
+            elif 'consignment' in row:
+                return 'consignment'
+            else:
+                return 'container_number'
 
     def get_port(self):
         self.add_new_columns()
