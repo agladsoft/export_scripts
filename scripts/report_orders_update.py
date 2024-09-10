@@ -47,7 +47,8 @@ DATE_FORMATS: tuple = (
     "%Y-%m-%d %H:%M:%S",
     "%d.%m.%Y",
     "%d.%m.%Y %H:%M:%S",
-    "%d.%m.%Y %H:%M"
+    "%d.%m.%Y %H:%M",
+    "%Y-%m-%d"
 )
 
 
