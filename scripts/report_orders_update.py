@@ -133,7 +133,7 @@ class Report_Order_Update(object):
 
     @staticmethod
     def change_format_value(value, flag=False):
-        if not value:
+        if not value and not isinstance(value, int):
             return 'NULL'
         if flag:
             value = str(value).replace("'", "''")
