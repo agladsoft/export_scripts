@@ -63,7 +63,7 @@ def unified_list_line_name_skip():
     client = clickhouse_client()
     items = {}
     line_unified_query = client.query(
-        f"SELECT * FROM reference_lines where line_unified in ('REEL SHIPPING','HEUNG-A LINE','SINOKOR')")
+        f"SELECT * FROM reference_lines where line_unified in ('REEL SHIPPING','HEUNG-A LINE','SINOKOR','MSC','ARKAS','SAFETRANS')")
     line_unified = line_unified_query.result_rows
     return [i[0] for i in line_unified]
 
@@ -112,7 +112,7 @@ class ParsedDf:
         return {
             'line': line_unified,
             'consignment': consignment_number,
-            'direction': row.get('direction', 'import'),
+            'direction': row.get('direction', 'export'),
         }
 
     def get_port_with_recursion(self, number_attempts: int, row, consignment) -> Optional[str]:
