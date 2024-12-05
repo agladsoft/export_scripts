@@ -62,10 +62,18 @@ def unified_list_line_name():
 def unified_list_line_name_skip():
     client = clickhouse_client()
     items = {}
-    line_unified_query = client.query(
-        f"SELECT * FROM reference_lines where line_unified in ('REEL SHIPPING','HEUNG-A LINE','SINOKOR','MSC','ARKAS','SAFETRANS')")
-    line_unified = line_unified_query.result_rows
-    return [i[0] for i in line_unified]
+    line_unified = client.query(
+        "SELECT * FROM reference_lines "
+        "WHERE line_unified in ('REEL SHIPPING', 'HEUNG-A LINE', 'SINOKOR', 'MSC', 'ARKAS', 'SAFETRANS')"
+    ).result_rows
+
+    for line in line_unified:
+        if line[1] == 'MSC':
+            items[line[0]] = ["ПОРОЖ", "ПРОЖ"]
+        else:
+            items[line[0]] = []
+
+    return items
 
 
 def get_line_unified(item: dict, line_name: str):
@@ -89,7 +97,11 @@ class ParsedDf:
 
     @staticmethod
     def check_lines(row: dict) -> bool:
-        if row.get('line', '').upper() in HEUNG_AND_SINOKOR_REEL:
+        line = row.get('line', '').upper()
+        goods_name = row.get('goods_name', '').upper()
+        empties = {item.upper() for item in HEUNG_AND_SINOKOR_REEL.get(line, [])}
+
+        if line in HEUNG_AND_SINOKOR_REEL and not any(name in goods_name for name in empties):
             return False
         return True
 
@@ -150,8 +162,7 @@ class ParsedDf:
         for index, row in self.df.iterrows():
             if row.get('line', '').upper() not in lines or row.get('tracking_seaport') is not None:
                 continue
-            if self.check_lines(row) and row.get('goods_name') and \
-                    any([i in row.get('goods_name', '').upper() for i in ["ПОРОЖ", "ПРОЖ"]]):
+            if self.check_lines(row) and row.get('goods_name'):
                 continue
             consignment = self.get_consignment(row)
             if row.get(consignment, False) not in data:
