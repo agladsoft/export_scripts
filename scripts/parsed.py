@@ -64,11 +64,11 @@ def unified_list_line_name_skip():
     items = {}
     line_unified = client.query(
         "SELECT * FROM reference_lines "
-        "WHERE line_unified in ('REEL SHIPPING', 'HEUNG-A LINE', 'SINOKOR', 'MSC', 'ARKAS', 'SAFETRANS')"
+        "WHERE line_unified in ('REEL SHIPPING','MSC', 'ARKAS', 'SAFETRANS')"
     ).result_rows
 
     for line in line_unified:
-        if line[1] == 'MSC':
+        if line[1] in ('MSC', 'ARKAS'):
             items[line[0]] = ["ПОРОЖ", "ПРОЖ"]
         else:
             items[line[0]] = []
