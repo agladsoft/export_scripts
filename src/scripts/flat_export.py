@@ -7,14 +7,11 @@ import contextlib
 import numpy as np
 import pandas as pd
 from typing import Optional
-from parsed import ParsedDf
+from src.scripts.parsed import ParsedDf
 from pandas import DataFrame
-from datetime import datetime
-from notifiers import get_notifier
+from src.scripts.__init__ import *
 
-CHAT_ID = '-1002064780308'
-TOPIC = '1069'
-ID = '1071'
+
 
 headers_eng: dict = {
     "Терминал": "terminal",
@@ -49,19 +46,6 @@ dict_types: dict = {
 date_formats: tuple = ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S")
 
 
-
-def telegram(message):
-    # teg = get_notifier('telegram')
-    # teg.notify(token=TOKEN, chat_id=CHAT_ID, message=message)
-    chat_id = CHAT_ID
-    token = os.environ["TOKEN_TELEGRAM"]
-    topic = TOPIC
-    message_id = ID
-    # teg.notify(token=get_my_env_var('TOKEN'), chat_id=get_my_env_var('CHAT_ID'), message=message)
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    params = {"chat_id": f"{chat_id}/{topic}", "text": message,
-              'reply_to_message_id': message_id}  # Добавляем /2 для указания второго подканала
-    response = requests.get(url, params=params)
 
 class Export(object):
     def __init__(self, input_file_path: str, output_folder: str):
@@ -132,5 +116,6 @@ class Export(object):
         self.write_to_json(df.to_dict('records'))
 
 
-export: Export = Export(sys.argv[1], sys.argv[2])
-export.main()
+if __name__ == "__main__":
+    export: Export = Export(sys.argv[1], sys.argv[2])
+    export.main()

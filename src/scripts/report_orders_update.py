@@ -5,7 +5,7 @@ import itertools
 import contextlib
 import numpy as np
 import pandas as pd
-from __init__ import *
+from src.scripts.__init__ import *
 from typing import Optional
 from pandas import DataFrame, Series
 from datetime import datetime

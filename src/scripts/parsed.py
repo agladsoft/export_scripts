@@ -82,9 +82,9 @@ def get_line_unified(item: dict, line_name: str):
             return key
     return line_name
 
-
-LINES = unified_list_line_name()
-HEUNG_AND_SINOKOR_REEL = unified_list_line_name_skip()
+#
+# LINES = unified_list_line_name()
+# HEUNG_AND_SINOKOR_REEL = unified_list_line_name_skip()
 
 
 class ParsedDf:
@@ -99,9 +99,9 @@ class ParsedDf:
     def check_lines(row: dict) -> bool:
         line = row.get('line', '').upper()
         goods_name = row.get('goods_name', '').upper()
-        empties = {item.upper() for item in HEUNG_AND_SINOKOR_REEL.get(line, [])}
+        empties = {item.upper() for item in unified_list_line_name_skip().get(line, [])}
 
-        if line in HEUNG_AND_SINOKOR_REEL and not any(name in goods_name for name in empties):
+        if line in unified_list_line_name_skip() and not any(name in goods_name for name in empties):
             return False
         return True
 
@@ -120,7 +120,7 @@ class ParsedDf:
 
     def body(self, row, consignment):
         consignment_number = self.get_number_consignment(row.get(consignment))
-        line_unified = get_line_unified(LINES, row.get('line'))
+        line_unified = get_line_unified(unified_list_line_name(), row.get('line'))
         return {
             'line': line_unified,
             'consignment': consignment_number,
@@ -138,7 +138,7 @@ class ParsedDf:
             return response.json()
         except Exception as ex:
             logging.error(f"Exception is {ex}")
-            time.sleep(30)
+            time.sleep(1)
             number_attempts -= 1
             self.get_port_with_recursion(number_attempts, row, consignment)
 
@@ -202,7 +202,7 @@ class ParsedDf:
 
     @staticmethod
     def check_line(line):
-        if line not in LINES:
+        if line not in unified_list_line_name():
             return True
         return False
 

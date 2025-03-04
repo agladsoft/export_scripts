@@ -6,8 +6,8 @@ import itertools
 import contextlib
 import numpy as np
 import pandas as pd
-from __init__ import *
-from parsed import ParsedDf
+from src.scripts.__init__ import *
+from src.scripts.parsed import ParsedDf
 from typing import Optional
 from pandas import DataFrame
 from datetime import datetime
@@ -44,7 +44,7 @@ HEADERS_ENG: dict = {
     ("Страна выгрузки",): "tracking_country",
 }
 
-DATE_FORMATS: tuple = ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M")
+DATE_FORMATS: tuple = ("%Y-%m-%d %H:%M:%S", "%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M", "%Y-%m-%d")
 
 
 class MissingCulumnName(Exception):
