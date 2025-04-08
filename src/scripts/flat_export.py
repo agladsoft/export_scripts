@@ -103,7 +103,7 @@ class Export(object):
         """
         The main function where we read the Excel file and write the file to json.
         """
-        df: DataFrame = pd.read_excel(self.input_file_path, dtype=dict_types)
+        df: DataFrame = pd.read_excel(self.input_file_path, skiprows=1, dtype={"№ конт.": str, "ТНВЭД": str})
         df = df.dropna(axis=0, how='all')
         df = df.rename(columns=headers_eng)
         df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
